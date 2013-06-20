@@ -95,7 +95,7 @@ public class EndpointHTTPIT {
         try {
             http.makeDirectory(mpDir);
             http.startMultipartUpload(mpDir, "chunked.txt");
-            http.uploadPart(testFile, chunks.iterator(), Duration.standardMinutes(1), null);
+            http.uploadPart(testFile, chunks.iterator(), null);
             http.completeMultipartUpload();
             assertTrue(http.exists(mpDir + "/chunked.txt"));
             http.deleteFile(mpDir + "/chunked.txt");

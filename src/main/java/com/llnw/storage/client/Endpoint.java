@@ -15,8 +15,7 @@ public interface Endpoint extends Closeable {
     void deleteFile(String path) throws IOException;
     void makeDirectory(String path) throws IOException;
     List<String> listFiles(String path) throws IOException;
-    void upload(File file, String path, String name,
-            @Nullable Duration heartbeatInterval, @Nullable ActivityCallback callback) throws IOException;
+    void upload(File file, String path, String name, @Nullable ActivityCallback callback) throws IOException;
     void noop() throws IOException;
     boolean exists(String path) throws IOException;
 }

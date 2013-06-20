@@ -154,8 +154,7 @@ public class EndpointFTP implements Endpoint {
 
 
     @Override
-    public void upload(File file, String path, String name, @Nullable Duration heartbeatInterval,
-            @Nullable ActivityCallback callback) throws IOException {
+    public void upload(File file, String path, String name, @Nullable ActivityCallback callback) throws IOException {
         ensureConnected();
 
         InputStream is = null;

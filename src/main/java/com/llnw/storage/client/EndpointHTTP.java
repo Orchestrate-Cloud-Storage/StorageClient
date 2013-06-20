@@ -210,8 +210,8 @@ public class EndpointHTTP implements EndpointMultipart {
 
 
     @Override
-    public void uploadPart(File file, @Nullable Iterator<Chunk> chunkIterator,
-            @Nullable Duration heartbeatInterval, @Nullable ActivityCallback callback) throws IOException {
+    public void uploadPart(File file, Iterator<Chunk> chunkIterator, @Nullable ActivityCallback callback)
+            throws IOException {
         requireAuth();
 
         if (mpid == null)
@@ -285,8 +285,7 @@ public class EndpointHTTP implements EndpointMultipart {
 
 
     @Override
-    public void upload(File file, String path, String name,
-            @Nullable Duration heartbeatInterval, @Nullable ActivityCallback callback) throws IOException {
+    public void upload(File file, String path, String name, @Nullable ActivityCallback callback) throws IOException {
         requireAuth();
 
         final HttpPost post = new HttpPost(endpoint.toString() + "/post/file");

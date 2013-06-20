@@ -64,7 +64,7 @@ public class EndpointIntegrationHelper {
         long start = System.nanoTime();
         interrupt.set(true);
         try {
-            endpoint.upload(testFile, "/content/abc123", "test.txt", Duration.standardMinutes(1), null);
+            endpoint.upload(testFile, "/content/abc123", "test.txt", null);
             fail();
         } catch (ClosedByInterruptException e) {
             // Ignore
@@ -110,7 +110,7 @@ public class EndpointIntegrationHelper {
                 assertFalse(endpoint.exists(remoteFilePath));
             }
 
-            endpoint.upload(testFile, dir, fileName, Duration.standardMinutes(1), null);
+            endpoint.upload(testFile, dir, fileName, null);
             files = endpoint.listFiles(dir);
 
             assertTrue(files.size() == 1);
