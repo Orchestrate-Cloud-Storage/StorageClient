@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean name="url" class="java.net.URL">
+        <constructor-arg value="http://example.com/" />
+    </bean>
+
+    <bean name="helper" class="com.llnw.storage.client.EndpointIntegrationHelper"/>
+
+    <bean name="http" class="com.delvenetworks.statemachine.transfer.AgileEndpointHTTP">
+        <constructor-arg ref="url"/>
+        <constructor-arg value="user"/>
+        <constructor-arg value="password"/>
+    </bean>
+
+
+</beans>
