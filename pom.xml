@@ -132,7 +132,7 @@
     </build>
 
     <scm>
-        <connection>scm:git:ssh://git@repo.delvenetworks.com/vps-dev/LimelightStorageClient.git</connection>
+        <connection>scm:git:ssh://git@repo.delvenetworks.com/vps-dev/StorageClient.git</connection>
     </scm>
 
 </project>
