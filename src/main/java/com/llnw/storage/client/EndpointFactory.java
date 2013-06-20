@@ -9,7 +9,7 @@ public class EndpointFactory {
     public Endpoint create(String host, String username, String password, boolean useFTP) {
         if (!useFTP) {
             try {
-                return new AgileEndpointHTTP(new URL("http://" + host + ":8080"), username, password);
+                return new EndpointHTTP(new URL("http://" + host + ":8080"), username, password);
             } catch (MalformedURLException e) {
                 throw Throwables.propagate(e);
             }

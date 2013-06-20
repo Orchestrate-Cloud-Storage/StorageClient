@@ -52,8 +52,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 @NotThreadSafe
-public class AgileEndpointHTTP implements EndpointMultipart {
-    private static final Logger log = LoggerFactory.getLogger(AgileEndpointHTTP.class);
+public class EndpointHTTP implements EndpointMultipart {
+    private static final Logger log = LoggerFactory.getLogger(EndpointHTTP.class);
 
     private static final String AUTH_HEADER = "X-Agile-Authorization";
     private static final String JSON_RPC_PATH = "/jsonrpc";
@@ -71,7 +71,7 @@ public class AgileEndpointHTTP implements EndpointMultipart {
     private String mpid;
     private int chunks;
 
-    public AgileEndpointHTTP(URL endpoint, String username, String password) {
+    public EndpointHTTP(URL endpoint, String username, String password) {
         this.endpoint = endpoint;
         this.username = username;
         this.password = password;
@@ -515,7 +515,7 @@ public class AgileEndpointHTTP implements EndpointMultipart {
         private RPC(String method, Map<String, String> params) {
             this.method = method;
             this.params = params;
-            this.id = ++AgileEndpointHTTP.this.id;
+            this.id = ++EndpointHTTP.this.id;
         }
     }
 

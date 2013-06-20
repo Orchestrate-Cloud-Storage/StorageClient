@@ -25,11 +25,11 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
-public class AgileEndpointHTTPIT {
+public class EndpointHTTPIT {
     private static File testFile;
 
     @Autowired
-    private AgileEndpointHTTP http;
+    private EndpointHTTP http;
 
     @Autowired
     private EndpointIntegrationHelper helper;
