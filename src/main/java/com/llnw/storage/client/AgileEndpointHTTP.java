@@ -1,9 +1,5 @@
 package com.llnw.storage.client;
 
-import com.delvenetworks.statemachine.io.HeartbeatInputStream;
-import com.delvenetworks.statemachine.io.sidechannel.Chunk;
-import com.delvenetworks.statemachine.io.sidechannel.SideChannel;
-import com.delvenetworks.statemachine.library.TransitionContext;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -17,6 +13,9 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.MalformedJsonException;
 
+import com.llnw.storage.client.io.ActivityCallback;
+import com.llnw.storage.client.io.Chunk;
+import com.llnw.storage.client.io.HeartbeatInputStream;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -212,7 +211,7 @@ public class AgileEndpointHTTP implements EndpointMultipart {
 
     @Override
     public void uploadPart(File file, @Nullable Iterator<Chunk> chunkIterator,
-            @Nullable Duration heartbeatInterval, @Nullable TransitionContext context) throws IOException {
+            @Nullable Duration heartbeatInterval, @Nullable ActivityCallback callback) throws IOException {
         requireAuth();
 
         if (mpid == null)
@@ -249,7 +248,7 @@ public class AgileEndpointHTTP implements EndpointMultipart {
                     post.addHeader("X-Agile-Part", Integer.toString(toUploadChunk));
                     post.addHeader("X-Agile-Multipart", mpid);
 
-                    final InputStream is = SideChannel.wrappedInputStream(fc, chunk, context);
+                    final InputStream is = HeartbeatInputStream.wrap(fc, chunk, callback);
                     final String sha256 = DigestUtils.sha256Hex(is);
                     is.reset();
 
@@ -287,7 +286,7 @@ public class AgileEndpointHTTP implements EndpointMultipart {
 
     @Override
     public void upload(File file, String path, String name,
-            @Nullable Duration heartbeatInterval, @Nullable TransitionContext context) throws IOException {
+            @Nullable Duration heartbeatInterval, @Nullable ActivityCallback callback) throws IOException {
         requireAuth();
 
         final HttpPost post = new HttpPost(endpoint.toString() + "/post/file");
@@ -299,8 +298,7 @@ public class AgileEndpointHTTP implements EndpointMultipart {
             entity.addPart("directory", new StringBody(path, Charsets.UTF_8));
             entity.addPart("basename", new StringBody(name, Charsets.UTF_8));
 
-            final InputStreamBody body = new InputStreamBody(new HeartbeatInputStream(
-                    new FileInputStream(file), heartbeatInterval, context),
+            final InputStreamBody body = new InputStreamBody(new HeartbeatInputStream(file, callback),
                     file.getName());
             entity.addPart("uploadFile", body);
 
@@ -309,7 +307,7 @@ public class AgileEndpointHTTP implements EndpointMultipart {
             final int status = response.getStatusLine().getStatusCode();
 
             if (status == HttpStatus.SC_OK) {
-                final String sha256 = DigestUtils.sha256Hex(new HeartbeatInputStream(file, heartbeatInterval, context));
+                final String sha256 = DigestUtils.sha256Hex(new HeartbeatInputStream(file, callback));
                 final Map<String, String> headerChecks = ImmutableMap.of(
                         "X-Agile-Status", "0",
                         "X-Agile-Size", Long.toString(file.length()),

@@ -1,7 +1,6 @@
 package com.llnw.storage.client;
 
-import com.delvenetworks.statemachine.library.TransitionContext;
-
+import com.llnw.storage.client.io.ActivityCallback;
 import org.joda.time.Duration;
 
 import javax.annotation.Nullable;
@@ -17,7 +16,7 @@ public interface Endpoint extends Closeable {
     void makeDirectory(String path) throws IOException;
     List<String> listFiles(String path) throws IOException;
     void upload(File file, String path, String name,
-            @Nullable Duration heartbeatInterval, @Nullable TransitionContext context) throws IOException;
+            @Nullable Duration heartbeatInterval, @Nullable ActivityCallback callback) throws IOException;
     void noop() throws IOException;
     boolean exists(String path) throws IOException;
 }

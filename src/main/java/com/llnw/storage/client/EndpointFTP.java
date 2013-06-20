@@ -1,10 +1,10 @@
 package com.llnw.storage.client;
 
-import com.delvenetworks.statemachine.io.HeartbeatInputStream;
-import com.delvenetworks.statemachine.library.TransitionContext;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
+import com.llnw.storage.client.io.ActivityCallback;
+import com.llnw.storage.client.io.HeartbeatInputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -155,12 +155,12 @@ public class EndpointFTP implements Endpoint {
 
     @Override
     public void upload(File file, String path, String name, @Nullable Duration heartbeatInterval,
-            @Nullable TransitionContext context) throws IOException {
+            @Nullable ActivityCallback callback) throws IOException {
         ensureConnected();
 
         InputStream is = null;
         try {
-            is = new HeartbeatInputStream(file, heartbeatInterval, context);
+            is = new HeartbeatInputStream(file, callback);
 
             if (!client.storeFile(path + "/" + name, is)) {
                 throw new EndpointException("Couldn't store " + name + " on the server: " + client.getReplyCode());
