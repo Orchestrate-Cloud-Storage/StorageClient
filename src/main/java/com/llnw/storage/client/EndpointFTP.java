@@ -109,7 +109,7 @@ public class EndpointFTP implements Endpoint {
                 if(!client.changeWorkingDirectory(dir)) {
                     client.makeDirectory(dir);
                     if (!client.changeWorkingDirectory(dir)) {
-                        throw new EndpointException("Couldn't make directory: " + current);
+                        throw new EndpointException("Couldn't make directory: " + dir + " current path " + current);
                     } else {
                         current.append(dir);
                         current.append("/");
