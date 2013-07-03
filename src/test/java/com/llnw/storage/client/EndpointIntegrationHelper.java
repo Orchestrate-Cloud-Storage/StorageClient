@@ -64,6 +64,7 @@ public class EndpointIntegrationHelper {
         long start = System.nanoTime();
         interrupt.set(true);
         try {
+            endpoint.makeDirectory("/content/abc123");
             endpoint.upload(testFile, "/content/abc123", "test.txt", null);
             fail();
         } catch (ClosedByInterruptException e) {
@@ -91,6 +92,9 @@ public class EndpointIntegrationHelper {
             endpoint.noop(); // Force login
 
             if (testExists) {
+                if (endpoint.exists(dir)) {
+                    endpoint.deleteDirectory(dir);
+                }
                 assertFalse(endpoint.exists(dir));
             }
             endpoint.makeDirectory(dir);

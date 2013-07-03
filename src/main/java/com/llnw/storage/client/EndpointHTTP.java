@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.InputStreamEntity;
@@ -42,6 +43,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -278,6 +280,8 @@ public class EndpointHTTP implements EndpointMultipart {
                     chunks++;
                 }
             }
+        } catch (ClientProtocolException e) {
+            throw unwindInterruptException(e);
         } finally {
             fc.close();
         }
@@ -317,6 +321,8 @@ public class EndpointHTTP implements EndpointMultipart {
                         " Response: " + responseToString(response));
                 throw throwAndLog("Got status: " + response.getStatusLine().getStatusCode() + " from upload");
             }
+        } catch (ClientProtocolException e) {
+            throw unwindInterruptException(e);
         } finally {
             post.releaseConnection();
         }
@@ -413,6 +419,8 @@ public class EndpointHTTP implements EndpointMultipart {
         } catch (MalformedJsonException e) {
             log.error("Bad JSON {}", response, e);
             throw e;
+        } catch (ClientProtocolException e) {
+            throw unwindInterruptException(e);
         } finally {
             post.releaseConnection();
         }
@@ -459,6 +467,23 @@ public class EndpointHTTP implements EndpointMultipart {
             }
         } finally {
             post.releaseConnection();
+        }
+    }
+
+
+    private IOException unwindInterruptException(IOException e) throws IOException {
+        // This is dumb. Sometimes httpcomponents will throw a ClientProtocolException which wraps the real
+        // exception we want to throw when interrupted, ClosedByInterruptException. So, try to find that
+        // exception in the stack, and then throw that one instead
+        Throwable t = e.getCause();
+        while (t != null && !(t instanceof ClosedByInterruptException)) {
+            t = t.getCause();
+        }
+
+        if (t instanceof ClosedByInterruptException) {
+            throw (IOException)t;
+        } else {
+            throw e;
         }
     }
 

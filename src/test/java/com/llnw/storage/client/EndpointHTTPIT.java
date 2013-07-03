@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,6 +58,12 @@ public class EndpointHTTPIT {
     }
 
 
+    @Before
+    public void clearInterrupt() {
+        Thread.interrupted();
+    }
+
+
     @Test
     public void listTest() throws Exception {
         helper.listTest(http);
@@ -97,7 +104,11 @@ public class EndpointHTTPIT {
             http.startMultipartUpload(mpDir, "chunked.txt");
             http.uploadPart(testFile, chunks.iterator(), null);
             http.completeMultipartUpload();
+
+            // Wait for the chunks to be assembled
+            Thread.sleep(Duration.standardMinutes(1).getMillis());
             assertTrue(http.exists(mpDir + "/chunked.txt"));
+
             http.deleteFile(mpDir + "/chunked.txt");
         } finally {
             http.deleteDirectory(mpDir);
