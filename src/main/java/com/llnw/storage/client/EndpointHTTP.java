@@ -22,7 +22,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.InputStreamEntity;
@@ -280,7 +279,7 @@ public class EndpointHTTP implements EndpointMultipart {
                     chunks++;
                 }
             }
-        } catch (ClientProtocolException e) {
+        } catch (IOException e) {
             throw unwindInterruptException(e);
         } finally {
             fc.close();
@@ -321,7 +320,7 @@ public class EndpointHTTP implements EndpointMultipart {
                         " Response: " + responseToString(response));
                 throw throwAndLog("Got status: " + response.getStatusLine().getStatusCode() + " from upload");
             }
-        } catch (ClientProtocolException e) {
+        } catch (IOException e) {
             throw unwindInterruptException(e);
         } finally {
             post.releaseConnection();
@@ -419,7 +418,7 @@ public class EndpointHTTP implements EndpointMultipart {
         } catch (MalformedJsonException e) {
             log.error("Bad JSON {}", response, e);
             throw e;
-        } catch (ClientProtocolException e) {
+        } catch (IOException e) {
             throw unwindInterruptException(e);
         } finally {
             post.releaseConnection();
