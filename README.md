@@ -8,7 +8,7 @@ How to use
 
 Given a hostname, username, and a password, you can use an EndpointFactory to get an Endpoint like so:
 
-    final Endpoint agile = EndpointFactory.create(host, user, pass, false);
+    final Endpoint agile = new EndpointFactory(host, user, pass).create(false);
 
 The final parameter is whether to use an FTP or an HTTP endpoint. This pattern is used to allow seamless fallback to FTP from HTTP or vice-versa.
 

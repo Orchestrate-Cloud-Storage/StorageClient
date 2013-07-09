@@ -3,13 +3,18 @@ package com.llnw.storage.client;
 import com.llnw.storage.client.io.ActivityCallback;
 
 import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 public class MockEndpointFactory extends EndpointFactory {
+    public MockEndpointFactory() {
+        super(null, null, null);
+    }
+
     @Override
-    public Endpoint create(String host, String username, String password, boolean useFTP) {
+    public Endpoint create(boolean useFTP) {
         return new Endpoint() {
             @Override
             public void deleteDirectory(String path) throws IOException {

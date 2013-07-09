@@ -6,7 +6,17 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class EndpointFactory {
-    public Endpoint create(String host, String username, String password, boolean useFTP) {
+    public final String host;
+    public final String username;
+    public final String password;
+
+    public EndpointFactory(String host, String username, String password) {
+        this.host = host;
+        this.username = username;
+        this.password = password;
+    }
+
+    public Endpoint create(boolean useFTP) {
         if (!useFTP) {
             try {
                 return new EndpointHTTP(new URL("http://" + host + ":8080"), username, password);
