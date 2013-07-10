@@ -1,5 +1,6 @@
 package com.llnw.storage.client;
 
+import com.google.common.collect.Lists;
 import com.llnw.storage.client.io.ActivityCallback;
 
 import javax.annotation.Nullable;
@@ -34,7 +35,7 @@ public class MockEndpointFactory extends EndpointFactory {
 
             @Override
             public List<String> listFiles(String path) throws IOException {
-                return null;
+                return Lists.newArrayList();
             }
 
             @Override
