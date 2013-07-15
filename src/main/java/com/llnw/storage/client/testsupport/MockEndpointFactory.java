@@ -12,21 +12,24 @@ import java.util.List;
 
 public class MockEndpointFactory extends EndpointFactory {
 
-    public Endpoint alwaysReturn = null;
+    public Endpoint ftpEndpoint = null;
+    public Endpoint httpEndpoint = null;
 
     public MockEndpointFactory() {
-        this(null);
+        this(null, null);
     }
 
-    public MockEndpointFactory(Endpoint alwaysReturn) {
+    public MockEndpointFactory(Endpoint ftpEndpoint, Endpoint httpEndpoint) {
         super(null,null,null);
-        this.alwaysReturn = null;
+        this.ftpEndpoint = ftpEndpoint;
+        this.httpEndpoint = httpEndpoint;
     }
 
     @Override
     public Endpoint create(boolean useFTP) {
-        if (alwaysReturn != null) {
-            return alwaysReturn;
+        final Endpoint targetEndpoint = (useFTP) ? this.ftpEndpoint : this.httpEndpoint;
+        if (targetEndpoint != null) {
+            return targetEndpoint;
         } else {
 
             return new Endpoint() {
@@ -68,7 +71,11 @@ public class MockEndpointFactory extends EndpointFactory {
         }
     }
 
-    public void setEndpoint(Endpoint alwaysReturn) {
-        this.alwaysReturn = alwaysReturn;
+    public void setFtpEndpoint(Endpoint endpoint) {
+        this.ftpEndpoint = endpoint;
+    }
+
+    public void setHttpEndpoint(Endpoint endpoint) {
+        this.httpEndpoint = endpoint;
     }
 }
