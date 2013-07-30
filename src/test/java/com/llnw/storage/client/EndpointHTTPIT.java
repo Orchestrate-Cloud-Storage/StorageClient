@@ -103,10 +103,10 @@ public class EndpointHTTPIT {
 
         try {
             http.makeDirectory(mpDir);
-            final String mpid = http.startMultipartUpload(mpDir, "chunked.txt");
+            http.startMultipartUpload(mpDir, "chunked.txt");
             http.uploadPart(testFile, chunks.iterator(), null);
 
-            final MultipartStatus status = http.getMultipartStatus(mpid);
+            final MultipartStatus status = http.getMultipartStatus();
             assertEquals(MultipartStatus.READY, status);
 
             http.completeMultipartUpload();
@@ -114,9 +114,10 @@ public class EndpointHTTPIT {
             // Wait for the chunks to be assembled
             MultipartStatus state = MultipartStatus.ERROR;
             for (int count = 100; count > 0; count--) {
-                state = http.getMultipartStatus(mpid);
+                state = http.getMultipartStatus();
                 if (MultipartStatus.SUCCESS.equals(state))
                     break;
+                Thread.sleep(1000);
             }
             assertEquals(MultipartStatus.SUCCESS, state);
             assertTrue(http.exists(mpDir + "/chunked.txt"));

@@ -55,9 +55,6 @@ import java.util.concurrent.TimeUnit;
 
 @NotThreadSafe
 public class EndpointHTTP implements EndpointMultipart {
-    public static final Set<MultipartStatus> BAD_MULTIPART_STATUSES =
-            ImmutableSet.of(MultipartStatus.DELETED, MultipartStatus.ERROR);
-
     private static final Logger log = LoggerFactory.getLogger(EndpointHTTP.class);
 
     private static final String AUTH_HEADER = "X-Agile-Authorization";
@@ -334,19 +331,23 @@ public class EndpointHTTP implements EndpointMultipart {
 
 
     @Override
-    public void resumeMultipartUpload(String mpid) throws IOException {
-        final MultipartStatus status = getMultipartStatus(mpid); // will throw if invalid mpid
-
-        if (BAD_MULTIPART_STATUSES.contains(status)) {
-            throw throwAndLog("Got " + status + " from getMultipartStatus");
-        }
-
+    public void setMpid(String mpid) {
         this.mpid = mpid;
     }
 
 
     @Override
-    public MultipartStatus getMultipartStatus(String mpid) throws IOException {
+    public void resumeMultipartUpload() throws IOException {
+        final MultipartStatus status = getMultipartStatus(); // will throw if invalid mpid
+
+        if (!MultipartStatus.READY.equals(status)) {
+            throw throwAndLog("Got incorrect status(" + status + ") from getMultipartStatus");
+        }
+    }
+
+
+    @Override
+    public MultipartStatus getMultipartStatus() throws IOException {
         final RPC call = new RPC("getMultipartStatus", "mpid", mpid);
         final JsonObject elem = execute(call).getAsJsonObject();
         int code = 0;

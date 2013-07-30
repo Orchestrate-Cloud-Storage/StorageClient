@@ -67,5 +67,13 @@ Multipart upload can be used simultaneously from different machines as long as t
 
 To stop a multipart upload, call abortMultipartUpload.
 
+To start a multipart upload from a different machine or thread than the one that started the connection, you must use setMpid and resumeMultipartUpload:
+
+    final EndpointMultipart mp = new EndpointHTTP(url, user, pass);
+    mp.setMpid(mpid); // mpid from another thread or shared from another machine
+    mp.resumeMultipartUpload(); // this will throw if invalid or if it's in the wrong state
+
+    final MultipartStatus status = mp.getMultipartStatus(); // should be READY
+
 FTP does not support multipart upload.
 

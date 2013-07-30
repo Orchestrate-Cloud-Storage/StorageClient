@@ -12,9 +12,10 @@ import java.util.Iterator;
 
 public interface EndpointMultipart extends Endpoint {
     public String startMultipartUpload(String path, String name) throws IOException;
-    public void resumeMultipartUpload(String mpid) throws IOException;
+    public void setMpid(String mpid);
+    public void resumeMultipartUpload() throws IOException;
     public void uploadPart(File file, Iterator<Chunk> chunks, @Nullable ActivityCallback callback) throws IOException;
     public void abortMultipartUpload() throws IOException;
-    public MultipartStatus getMultipartStatus(String mpid) throws IOException;
+    public MultipartStatus getMultipartStatus() throws IOException;
     public void completeMultipartUpload() throws IOException;
 }
