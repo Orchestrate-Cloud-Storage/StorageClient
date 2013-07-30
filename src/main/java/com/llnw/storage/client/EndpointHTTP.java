@@ -50,14 +50,19 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @NotThreadSafe
 public class EndpointHTTP implements EndpointMultipart {
+    public static final Set<MultipartStatus> BAD_MULTIPART_STATUSES =
+            ImmutableSet.of(MultipartStatus.DELETED, MultipartStatus.ERROR);
+
     private static final Logger log = LoggerFactory.getLogger(EndpointHTTP.class);
 
     private static final String AUTH_HEADER = "X-Agile-Authorization";
     private static final String JSON_RPC_PATH = "/jsonrpc";
+
 
     private final URL endpoint;
     private final String username;
@@ -330,6 +335,18 @@ public class EndpointHTTP implements EndpointMultipart {
 
     @Override
     public void resumeMultipartUpload(String mpid) throws IOException {
+        final MultipartStatus status = getMultipartStatus(mpid); // will throw if invalid mpid
+
+        if (BAD_MULTIPART_STATUSES.contains(status)) {
+            throw throwAndLog("Got " + status + " from getMultipartStatus");
+        }
+
+        this.mpid = mpid;
+    }
+
+
+    @Override
+    public MultipartStatus getMultipartStatus(String mpid) throws IOException {
         final RPC call = new RPC("getMultipartStatus", "mpid", mpid);
         final JsonObject elem = execute(call).getAsJsonObject();
         int code = 0;
@@ -337,7 +354,17 @@ public class EndpointHTTP implements EndpointMultipart {
             throw throwAndLog("Invalid mpid: " + code + " obj: " + elem);
         }
 
-        this.mpid = mpid;
+        final int state;
+        if (!elem.has("state")) {
+            throw throwAndLog("Invalid returned object");
+        }
+
+        state = elem.get("state").getAsInt();
+        if (state < 0 || state >= MultipartStatus.values().length) {
+            throw throwAndLog("State out of supported range");
+        }
+
+        return MultipartStatus.values()[state];
     }
 
 

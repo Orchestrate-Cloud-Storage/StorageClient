@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -101,12 +103,22 @@ public class EndpointHTTPIT {
 
         try {
             http.makeDirectory(mpDir);
-            http.startMultipartUpload(mpDir, "chunked.txt");
+            final String mpid = http.startMultipartUpload(mpDir, "chunked.txt");
             http.uploadPart(testFile, chunks.iterator(), null);
+
+            final MultipartStatus status = http.getMultipartStatus(mpid);
+            assertEquals(MultipartStatus.READY, status);
+
             http.completeMultipartUpload();
 
             // Wait for the chunks to be assembled
-            Thread.sleep(Duration.standardMinutes(1).getMillis());
+            MultipartStatus state = MultipartStatus.ERROR;
+            for (int count = 100; count > 0; count--) {
+                state = http.getMultipartStatus(mpid);
+                if (MultipartStatus.SUCCESS.equals(state))
+                    break;
+            }
+            assertEquals(MultipartStatus.SUCCESS, state);
             assertTrue(http.exists(mpDir + "/chunked.txt"));
 
             http.deleteFile(mpDir + "/chunked.txt");

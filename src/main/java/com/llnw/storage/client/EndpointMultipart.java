@@ -15,5 +15,6 @@ public interface EndpointMultipart extends Endpoint {
     public void resumeMultipartUpload(String mpid) throws IOException;
     public void uploadPart(File file, Iterator<Chunk> chunks, @Nullable ActivityCallback callback) throws IOException;
     public void abortMultipartUpload() throws IOException;
+    public MultipartStatus getMultipartStatus(String mpid) throws IOException;
     public void completeMultipartUpload() throws IOException;
 }
