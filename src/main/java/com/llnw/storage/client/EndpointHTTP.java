@@ -190,8 +190,6 @@ public class EndpointHTTP implements EndpointMultipart {
             // 0 indicates success
             throw throwAndLog("Couldn't complete multipart upload with mpid(" + mpid + "): " + returnCode);
         }
-
-        this.mpid = null;
     }
 
 
