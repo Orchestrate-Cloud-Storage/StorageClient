@@ -440,7 +440,13 @@ public class EndpointHTTP implements EndpointMultipart {
 
             final JsonObject obj = parser.parse(response).getAsJsonObject();
 
-            return obj.get("result");
+            if (obj.has("result")) {
+                return obj.get("result");
+            } else {
+                final String msg = String.format("No result field from %s(%s) response: %s", args.method,
+                        args.params.toString(), response);
+                throw throwAndLog(msg);
+            }
         } catch (JsonSyntaxException e) {
             log.error("JsonSyntaxException from {}", response, e);
             throw e;
