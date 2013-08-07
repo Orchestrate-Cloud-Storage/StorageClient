@@ -10,7 +10,7 @@
 
     <bean name="helper" class="com.llnw.storage.client.EndpointIntegrationHelper"/>
 
-    <bean name="http" class="com.delvenetworks.statemachine.transfer.AgileEndpointHTTP">
+    <bean name="http" class="com.llnw.storage.client.EndpointHTTP">
         <constructor-arg ref="url"/>
         <constructor-arg value="user"/>
         <constructor-arg value="password"/>
