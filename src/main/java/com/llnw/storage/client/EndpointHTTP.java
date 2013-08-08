@@ -70,6 +70,8 @@ public class EndpointHTTP implements EndpointMultipart {
     private int id;
     private String auth;
     private String mpid;
+    private String lastQuery;    // The JSON that was sent to the HTTP API for the last query, for diagnostics
+    private String lastResponse; // The response that was returned from the HTTP API, for diagnostics
     private int chunks;
 
     public EndpointHTTP(URL endpoint, String username, String password) {
@@ -268,8 +270,6 @@ public class EndpointHTTP implements EndpointMultipart {
                                 "X-Agile-Checksum", sha256);
                         checkHeaders(response, headerChecks);
                     } else {
-                        log.warn("Got status: " + status + " from upload." +
-                                " Response: " + responseToString(response));
                         throw throwAndLog("Got status: " + response.getStatusLine().getStatusCode() + " from upload");
                     }
                 } finally {
@@ -318,8 +318,6 @@ public class EndpointHTTP implements EndpointMultipart {
                         "X-Agile-Checksum", sha256);
                 checkHeaders(response, headerChecks);
             } else {
-                log.warn("Got status: " + status + " from upload." +
-                        " Response: " + responseToString(response));
                 throw throwAndLog("Got status: " + response.getStatusLine().getStatusCode() + " from upload");
             }
         } catch (IOException e) {
@@ -426,15 +424,16 @@ public class EndpointHTTP implements EndpointMultipart {
 
         String response = "";
         try {
+            this.lastQuery = message;
             post.setEntity(new StringEntity(message));
+
             final HttpResponse httpResponse = client.execute(post);
             response = responseToString(httpResponse);
+            this.lastResponse = response;
+
             final int status = httpResponse.getStatusLine().getStatusCode();
 
             if (status != HttpStatus.SC_OK) {
-                log.warn("Got status " + status + " from " +
-                        args.method + "(" + args.params.toString() + ")." +
-                        " Response: " + response);
                 throw throwAndLog("Got status: " + status + " from method: " + args.method);
             } else if (checkHeaders != null) {
                 checkHeaders(httpResponse, checkHeaders);
@@ -445,9 +444,7 @@ public class EndpointHTTP implements EndpointMultipart {
             if (obj.has("result")) {
                 return obj.get("result");
             } else {
-                final String msg = String.format("No result field from %s(%s) response: %s", args.method,
-                        args.params.toString(), response);
-                throw throwAndLog(msg);
+                throw throwAndLog("No result field");
             }
         } catch (JsonSyntaxException e) {
             log.error("JsonSyntaxException from {}", response, e);
@@ -527,7 +524,7 @@ public class EndpointHTTP implements EndpointMultipart {
 
 
     private EndpointException throwAndLog(String message) throws EndpointException {
-        log.error(message);
+        log.error(message + "\n  Query(" + this.lastQuery + ")\n  Response(" + this.lastResponse + ")");
         throw new EndpointException(message);
     }
 
