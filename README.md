@@ -3,6 +3,8 @@ Limelight Orchestrate Cloud Storage Java Client
 
 Java client library for interacting with Limelight Orchestrate Cloud Storage via the HTTP JSON RPC API or via FTP.
 
+*Note*: Unless specifically documented, support for the use of these tools is not included as part of your Limelight Orchestrate service accounts and associated Service Level Agreement (SLA).
+
 How to use
 ----------
 
