@@ -12,10 +12,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.MalformedJsonException;
-
 import com.llnw.storage.client.io.ActivityCallback;
 import com.llnw.storage.client.io.Chunk;
 import com.llnw.storage.client.io.HeartbeatInputStream;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -30,7 +30,6 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +49,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @NotThreadSafe
@@ -183,7 +181,11 @@ public class EndpointHTTP implements EndpointMultipart {
 
         final RPC call = new RPC("completeMultipart", "mpid", mpid);
         final JsonObject result = execute(call).getAsJsonObject();
+        if (!result.has("code"))
+            throw throwAndLog("No response code from complete multipart upload with mpid(" + mpid + ")");
         final int returnCode = result.get("code").getAsInt();
+        if (!result.has("numpieces"))
+            throw throwAndLog("No numpieces from complete multipart upload with mpid(" + mpid + ")");
         final int returnedChunks = result.get("numpieces").getAsInt();
 
         if (returnCode != 0 || returnedChunks != chunks - 1) {
