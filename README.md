@@ -1,7 +1,7 @@
 Limelight Orchestrate Cloud Storage Java Client
 ======================
 
-Java client library for interacting with Limelight Orchestrate Cloud Storage via the HTTP JSON RPC API or via FTP.
+Java client library for interacting with Limelight Orchestrate Cloud Storage (LOCS) via the HTTP JSON RPC API or via FTP.
 
 *Note*: Unless specifically documented, support for the use of these tools is not included as part of your Limelight Orchestrate service accounts and associated Service Level Agreement (SLA).
 
@@ -10,32 +10,32 @@ How to use
 
 Given a hostname, username, and a password, you can use an EndpointFactory to get an Endpoint like so:
 
-    final Endpoint agile = new EndpointFactory(host, user, pass).create(false);
+    final Endpoint locs = new EndpointFactory(host, user, pass).create(false);
 
 The final parameter is whether to use an FTP or an HTTP endpoint. This pattern is used to allow seamless fallback to FTP from HTTP or vice-versa.
 
 You can do lots of things with an Endpoint:
 
-    agile.makeDirectory("/test/directory/here"); // recursive!
-    final boolean exists = agile.exists("/test/directory/here"); // true
+    locs.makeDirectory("/test/directory/here"); // recursive!
+    final boolean exists = locs.exists("/test/directory/here"); // true
 
     final File sampleFile = File.createTempFile("test", ".txt");
     fill(sampleFile); // give it some data
 
-    agile.upload(sampleFile, "/test/directory/here", "remotename.txt", null);
-    final boolean sampleExists = agile.exists("/test/directory/here/remotename.txt"); // true
+    locs.upload(sampleFile, "/test/directory/here", "remotename.txt", null);
+    final boolean sampleExists = locs.exists("/test/directory/here/remotename.txt"); // true
 
-    agile.deleteFile("/test/directory/here/remotename.txt");
-    agile.deleteDirectory("/test/directory/here");
+    locs.deleteFile("/test/directory/here/remotename.txt");
+    locs.deleteDirectory("/test/directory/here");
 
-All of these methods work whether you are using FTP or HTTP to access Agile.
+All of these methods work whether you are using FTP or HTTP to access LOCS.
 
 The upload method optionally takes an ActivityCallback class, which is called every so often when data is sent.
 
 Multipart Support
 -----------------
 
-To use the new Agile multipart upload, you must use the HTTP API:
+To use LOCS multipart upload, you must use the HTTP API:
 
     final EndpointMultipart mp = new EndpointHTTP(url, user, pass);
     final String path = "/test/multipart";
