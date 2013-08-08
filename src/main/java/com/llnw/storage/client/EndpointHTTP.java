@@ -43,7 +43,11 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
@@ -366,8 +370,8 @@ public class EndpointHTTP implements EndpointMultipart {
     }
 
     @Override
-    public List<MultipartPiece> listMultipartPiece(String mpid, int lastPiece, int pageSize) throws IOException {
-        final RPC call = new RPC("listMultipartPiece", "mpid", mpid, "cookie", Integer.toString(lastPiece), "pagesize", new Integer(pageSize));
+    public List<MultipartPiece> listMultipartPiece(int lastPiece, int pageSize) throws IOException {
+        final RPC call = new RPC("listMultipartPiece", "mpid", mpid, "cookie", lastPiece, "pagesize", pageSize);
 
         final JsonObject ret = execute(call).getAsJsonObject();
         int code = 0;

@@ -1,41 +1,27 @@
 package com.llnw.storage.client;
 
+import com.google.common.base.Objects;
+
 
 public class MultipartPiece {
-    private int number;
-    private int state;
-    private int size;
-    private int error;
+    public final int number;
+    public final int state;
+    public final int size;
+    public final int error;
 
-    public int getNumber() {
-        return number;
-    }
-
-    public void setNumber(int number) {
+    public MultipartPiece(int number, int state, int size, int error) {
         this.number = number;
-    }
-
-    public int getState() {
-        return state;
-    }
-
-    public void setState(int state) {
         this.state = state;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
         this.size = size;
-    }
-
-    public int getError() {
-        return error;
-    }
-
-    public void setError(int error) {
         this.error = error;
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(getClass())
+                .add("number", number)
+                .add("state", state)
+                .add("size", size)
+                .add("error", error).toString();
     }
 }
