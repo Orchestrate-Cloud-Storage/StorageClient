@@ -43,11 +43,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
@@ -369,10 +365,23 @@ public class EndpointHTTP implements EndpointMultipart {
         return MultipartStatus.values()[state];
     }
 
+    @Override
+    public List<MultipartPiece> listMultipartPiece(String mpid, int lastPiece, int pageSize) throws IOException {
+        final RPC call = new RPC("listMultipartPiece", "mpid", mpid, "cookie", Integer.toString(lastPiece), "pagesize", new Integer(pageSize));
 
-    private int whichChunkOffset(final int startingChunk, final long targetOffset, final int pageSize) throws IOException {
+        final JsonObject ret = execute(call).getAsJsonObject();
+        int code = 0;
+        if (!ret.has("code") || (code = ret.get("code").getAsInt()) != 0 || !ret.has("pieces")) {
+            // Failure
+            throw throwAndLog("Invalid code for listMultipartPiece: " + code + " obj: " + ret);
+        }
+
+        return Arrays.asList(gson.fromJson(ret.get("pieces").getAsJsonArray(), MultipartPiece[].class));
+    }
+
+    private int whichChunkOffset(final int startingChunk, final long targetOffset, final Integer pageSize) throws IOException {
         final RPC call = new RPC("listMultipartPiece",
-                "mpid", mpid, "lastpiece", Integer.toString(startingChunk), "pagesize", Integer.toString(pageSize));
+                "mpid", mpid, "cookie", Integer.toString(startingChunk), "pagesize", new Integer(pageSize));
 
         final JsonObject ret = execute(call).getAsJsonObject();
         int code = 0;
@@ -533,26 +542,26 @@ public class EndpointHTTP implements EndpointMultipart {
     private class RPC {
         private final String jsonrpc = "2.0";
         private final String method;
-        private final Map<String,String> params;
+        private final Map<String,Object> params;
         private final int id;
 
 
         private RPC(final String method) {
-            this(method, new HashMap<String, String>());
+            this(method, new HashMap<String, Object>());
         }
 
 
-        private RPC(final String method, final String paramOneName, final String paramOneValue) {
-            this(method, new HashMap<String, String>() {{
+        private RPC(final String method, final String paramOneName, final Object paramOneValue) {
+            this(method, new HashMap<String, Object>() {{
                 put(paramOneName, paramOneValue);
             }});
         }
 
 
         private RPC(final String method,
-                final String paramOneName, final String paramOneValue,
-                final String paramTwoName, final String paramTwoValue) {
-            this(method, new HashMap<String, String>() {{
+                final String paramOneName, final Object paramOneValue,
+                final String paramTwoName, final Object paramTwoValue) {
+            this(method, new HashMap<String, Object>() {{
                 put(paramOneName, paramOneValue);
                 put(paramTwoName, paramTwoValue);
             }});
@@ -560,10 +569,10 @@ public class EndpointHTTP implements EndpointMultipart {
 
 
         private RPC(final String method,
-                final String paramOneName, final String paramOneValue,
-                final String paramTwoName, final String paramTwoValue,
-                final String paramThreeName, final String paramThreeValue) {
-            this(method, new HashMap<String, String>() {{
+                final String paramOneName, final Object paramOneValue,
+                final String paramTwoName, final Object paramTwoValue,
+                final String paramThreeName, final Object paramThreeValue) {
+            this(method, new HashMap<String, Object>() {{
                 put(paramOneName, paramOneValue);
                 put(paramTwoName, paramTwoValue);
                 put(paramThreeName, paramThreeValue);
@@ -571,7 +580,7 @@ public class EndpointHTTP implements EndpointMultipart {
         }
 
 
-        private RPC(String method, Map<String, String> params) {
+        private RPC(String method, Map<String, Object> params) {
             this.method = method;
             this.params = params;
             this.id = ++EndpointHTTP.this.id;

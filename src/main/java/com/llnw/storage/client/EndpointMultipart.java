@@ -1,5 +1,6 @@
 package com.llnw.storage.client;
 
+import com.google.gson.JsonArray;
 import com.llnw.storage.client.io.ActivityCallback;
 import com.llnw.storage.client.io.Chunk;
 import org.joda.time.Duration;
@@ -9,6 +10,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 public interface EndpointMultipart extends Endpoint {
     public String startMultipartUpload(String path, String name) throws IOException;
@@ -18,4 +20,5 @@ public interface EndpointMultipart extends Endpoint {
     public void abortMultipartUpload() throws IOException;
     public MultipartStatus getMultipartStatus() throws IOException;
     public void completeMultipartUpload() throws IOException;
+    public List<MultipartPiece> listMultipartPiece(String mpid, int lastPiece, int pageSize) throws IOException;
 }
