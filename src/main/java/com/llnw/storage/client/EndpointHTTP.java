@@ -336,10 +336,14 @@ public class EndpointHTTP implements EndpointMultipart {
 
     @Override
     public void resumeMultipartUpload() throws IOException {
-        final MultipartStatus status = getMultipartStatus(); // will throw if invalid mpid
+        if (mpid == null)
+            throw new IllegalArgumentException("Must call startUpload or setMpid before this");
 
-        if (!MultipartStatus.READY.equals(status)) {
-            throw throwAndLog("Got incorrect status(" + status + ") from getMultipartStatus");
+        final RPC call = new RPC("restartMultipart", "mpid", mpid);
+        final JsonObject elem = execute(call).getAsJsonObject();
+        int code = 0;
+        if (!elem.has("code") || (code = elem.get("code").getAsInt()) != 0) {
+            throw throwAndLog("Invalid mpid: " + code + " obj: " + elem);
         }
     }
 
