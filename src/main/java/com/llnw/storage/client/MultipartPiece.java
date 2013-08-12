@@ -24,4 +24,8 @@ public class MultipartPiece {
                 .add("size", size)
                 .add("error", error).toString();
     }
+
+    public MultipartStatus getStatus() {
+        return MultipartStatus.fromInt(state);
+    }
 }

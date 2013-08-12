@@ -360,18 +360,17 @@ public class EndpointHTTP implements EndpointMultipart {
             throw throwAndLog("Invalid mpid: " + code + " obj: " + elem);
         }
 
-        final int state;
         if (!elem.has("state")) {
             throw throwAndLog("Invalid returned object");
         }
 
-        state = elem.get("state").getAsInt();
-        if (state < 0 || state >= MultipartStatus.values().length) {
-            throw throwAndLog("State out of supported range");
+        try {
+            return MultipartStatus.fromInt(elem.get("state").getAsInt());
+        } catch (IllegalArgumentException e) {
+            throw throwAndLog(e.getMessage());
         }
-
-        return MultipartStatus.values()[state];
     }
+
 
     @Override
     public List<MultipartPiece> listMultipartPiece(int lastPiece, int pageSize) throws IOException {
