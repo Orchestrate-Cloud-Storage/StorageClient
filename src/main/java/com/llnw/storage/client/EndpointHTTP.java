@@ -375,6 +375,9 @@ public class EndpointHTTP implements EndpointMultipart {
 
     @Override
     public List<MultipartPiece> listMultipartPiece(int lastPiece, int pageSize) throws IOException {
+        if (mpid == null)
+            throw new IllegalArgumentException("Must call startUpload or setMpid before this");
+
         final RPC call = new RPC("listMultipartPiece", "mpid", mpid, "cookie", lastPiece, "pagesize", pageSize);
 
         final JsonObject ret = execute(call).getAsJsonObject();
