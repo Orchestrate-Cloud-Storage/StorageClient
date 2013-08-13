@@ -307,7 +307,11 @@ public class EndpointHTTP implements EndpointMultipart {
             entity.addPart("uploadFile", body);
 
             post.setEntity(entity);
+            this.lastQuery = "upload " + file.getAbsolutePath() + " to " + path + "/" + name;
+
             final HttpResponse response = client.execute(post);
+            this.lastResponse = responseToString(response);
+
             final int status = response.getStatusLine().getStatusCode();
 
             if (status == HttpStatus.SC_OK) {
