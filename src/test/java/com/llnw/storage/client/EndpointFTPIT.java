@@ -3,6 +3,7 @@ package com.llnw.storage.client;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +50,10 @@ public class EndpointFTPIT {
         FileUtils.deleteQuietly(testFile);
     }
 
+    @Before
+    public void before() {
+        Thread.interrupted(); // clear interrupt flag
+    }
 
     @Test
     public void listTest() throws Exception {
