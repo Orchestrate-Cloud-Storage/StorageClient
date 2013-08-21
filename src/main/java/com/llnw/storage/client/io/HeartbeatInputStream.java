@@ -3,6 +3,7 @@ package com.llnw.storage.client.io;
 import org.apache.commons.io.input.ProxyInputStream;
 
 import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -60,7 +61,7 @@ public class HeartbeatInputStream extends ProxyInputStream {
     }
 
 
-    public static InputStream wrap(final ByteBuffer buf, final ActivityCallback callback)
+    public static HeartbeatInputStream wrap(final ByteBuffer buf, final ActivityCallback callback)
             throws IOException {
         return new HeartbeatInputStream(new InputStream() {
             @Override

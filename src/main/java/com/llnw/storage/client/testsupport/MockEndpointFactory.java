@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 public class MockEndpointFactory extends EndpointFactory {
@@ -67,6 +68,13 @@ public class MockEndpointFactory extends EndpointFactory {
                 public boolean exists(String path) throws IOException {
                     return false;
                 }
+
+                @Override
+                public void upload(ByteBuffer byteBuffer, String path, String name, ActivityCallback callback)
+                        throws IOException {
+
+                }
+
             };
         }
     }

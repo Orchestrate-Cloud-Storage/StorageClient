@@ -2,9 +2,9 @@ package com.llnw.storage.client;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-
 import com.llnw.storage.client.io.ActivityCallback;
 import com.llnw.storage.client.io.HeartbeatInputStream;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -51,9 +51,12 @@ public class EndpointFTP implements Endpoint {
     @Override
     public void deleteDirectory(String path) throws IOException {
         ensureConnected();
-
-        if (!client.removeDirectory(path)) {
-            throw new EndpointException("Couldn't delete " + path + ": " + client.getReplyCode());
+        try {
+            if (!client.removeDirectory(path)) {
+                throw new EndpointException("Couldn't delete " + path + ": " + client.getReplyCode());
+            }
+        } catch (IOException e) {
+            throw EndpointUtil.unwindInterruptException(e);
         }
     }
 
@@ -61,9 +64,12 @@ public class EndpointFTP implements Endpoint {
     @Override
     public void deleteFile(String path) throws IOException {
         ensureConnected();
-
-        if (!client.deleteFile(path)) {
-            throw new EndpointException("Couldn't delete " + path + ": " + client.getReplyCode());
+        try {
+            if (!client.deleteFile(path)) {
+                throw new EndpointException("Couldn't delete " + path + ": " + client.getReplyCode());
+            }
+        } catch (IOException e) {
+            throw EndpointUtil.unwindInterruptException(e);
         }
     }
 
@@ -75,6 +81,8 @@ public class EndpointFTP implements Endpoint {
                 client.logout();
             } catch (FTPConnectionClosedException e) {
                 log.warn("Connection closed prematurely", e);
+            } catch (IOException e) {
+                throw EndpointUtil.unwindInterruptException(e);
             } finally {
                 client.disconnect();
             }
@@ -87,11 +95,14 @@ public class EndpointFTP implements Endpoint {
         ensureConnected();
         final String starting = client.printWorkingDirectory();
 
-
-        if ('/' == path.charAt(0)) { // explicit full path
-            if (!client.changeWorkingDirectory("/")) {
-                throw new EndpointException("Couldn't chdir to '/' ");
+        try {
+            if ('/' == path.charAt(0)) { // explicit full path
+                if (!client.changeWorkingDirectory("/")) {
+                    throw new EndpointException("Couldn't chdir to '/' ");
+                }
             }
+        } catch (IOException e) {
+            throw EndpointUtil.unwindInterruptException(e);
         }
 
         // TODO nbeaudrot 2013-01-24 we should really do some funky "longest shared path from root" if
@@ -116,6 +127,8 @@ public class EndpointFTP implements Endpoint {
                     }
                 }
             }
+        } catch (IOException e) {
+            throw EndpointUtil.unwindInterruptException(e);
         } finally {
             client.changeWorkingDirectory(starting);
         }
@@ -125,8 +138,12 @@ public class EndpointFTP implements Endpoint {
     @Override
     public List<String> listFiles(String path) throws IOException {
         ensureConnected();
-
-        final FTPFile[] files = client.listFiles(path);
+        FTPFile[] files = null;
+        try {
+            files = client.listFiles(path);
+        } catch (IOException e) {
+            throw EndpointUtil.unwindInterruptException(e);
+        }
 
         if (files == null)
             return Lists.newArrayList();
@@ -149,54 +166,68 @@ public class EndpointFTP implements Endpoint {
     @Override
     public void noop() throws IOException {
         ensureConnected(); // Uses noop to verify connection
-        client.noop();
+        try {
+            client.noop();
+        } catch (IOException e) {
+            throw EndpointUtil.unwindInterruptException(e);
+        }
     }
-
 
     @Override
     public void upload(File file, String path, String name, @Nullable ActivityCallback callback) throws IOException {
+        this.upload(new HeartbeatInputStream(file, callback), path, name);
+    }
+
+    @Override
+    public void upload(ByteBuffer byteBuffer, String path, String name, @Nullable ActivityCallback callback) throws IOException {
+        this.upload(HeartbeatInputStream.wrap(byteBuffer, callback), path, name);
+    }
+
+    private void upload(HeartbeatInputStream heartbeatStream, String path, String name) throws IOException {
         ensureConnected();
-
-        InputStream is = null;
         try {
-            is = new HeartbeatInputStream(file, callback);
-
-            if (!client.storeFile(path + "/" + name, is)) {
+            if (!client.storeFile(path + "/" + name, heartbeatStream)) {
                 throw new EndpointException("Couldn't store " + name + " on the server: " + client.getReplyCode());
             }
+        } catch (IOException e) {
+            throw EndpointUtil.unwindInterruptException(e);
         } finally {
-            IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(heartbeatStream);
         }
     }
 
 
     private void ensureConnected() throws IOException {
         try {
-            if (client.isConnected() && client.sendNoOp()) return;
-        } catch (FTPConnectionClosedException e) {
-            // Oh, we're closed, OK :)
-        }
+            try {
+                if (client.isConnected() && client.sendNoOp()) return;
+            } catch (FTPConnectionClosedException e) {
+                // Oh, we're closed, OK :)
+            }
 
-        // Set timeouts
-        client.setConnectTimeout(THIRTY_SECONDS_MILLIS);
-        client.setDataTimeout(THIRTY_SECONDS_MILLIS);
-        client.setControlKeepAliveTimeout(120);
+            // Set timeouts
+            client.setConnectTimeout(THIRTY_SECONDS_MILLIS);
+            client.setDataTimeout(THIRTY_SECONDS_MILLIS);
+            client.setControlKeepAliveTimeout(120);
 
-        client.connect(host, port);
-        // Set SO_TIMEOUT _AFTER_ connect because ??
-        client.setSoTimeout(THIRTY_SECONDS_MILLIS);
+            client.connect(host, port);
+            // Set SO_TIMEOUT _AFTER_ connect because ??
+            client.setSoTimeout(THIRTY_SECONDS_MILLIS);
 
-        if (FTPReply.isPositiveCompletion(client.getReplyCode())) {
-            if (client.login(username, password)) {
-                client.enterLocalPassiveMode();
-                client.setFileType(FTP.BINARY_FILE_TYPE);
+            if (FTPReply.isPositiveCompletion(client.getReplyCode())) {
+                if (client.login(username, password)) {
+                    client.enterLocalPassiveMode();
+                    client.setFileType(FTP.BINARY_FILE_TYPE);
+                } else {
+                    client.disconnect();
+                    throw new EndpointException("Couldn't log into FTP server");
+                }
             } else {
                 client.disconnect();
-                throw new EndpointException("Couldn't log into FTP server");
+                throw new EndpointException("Couldn't connect to FTP server: " + host + ":" + port);
             }
-        } else {
-            client.disconnect();
-            throw new EndpointException("Couldn't connect to FTP server: " + host + ":" + port);
+        } catch (IOException e) {
+            throw EndpointUtil.unwindInterruptException(e);
         }
     }
 }

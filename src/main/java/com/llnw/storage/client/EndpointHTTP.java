@@ -2,9 +2,11 @@ package com.llnw.storage.client;
 
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.CountingInputStream;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -16,6 +18,7 @@ import com.llnw.storage.client.io.ActivityCallback;
 import com.llnw.storage.client.io.Chunk;
 import com.llnw.storage.client.io.HeartbeatInputStream;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -41,8 +44,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.channels.ClosedByInterruptException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -282,15 +288,24 @@ public class EndpointHTTP implements EndpointMultipart {
                 }
             }
         } catch (IOException e) {
-            throw unwindInterruptException(e);
+            throw EndpointUtil.unwindInterruptException(e);
         } finally {
             fc.close();
         }
     }
 
-
     @Override
     public void upload(File file, String path, String name, @Nullable ActivityCallback callback) throws IOException {
+        this.upload(new HeartbeatInputStream(file, callback), path, name);
+    }
+
+    @Override
+    public void upload(ByteBuffer byteBuffer, String path, String name, @Nullable ActivityCallback callback) throws IOException {
+        this.upload(HeartbeatInputStream.wrap(byteBuffer, callback), path, name);
+    }
+
+
+    private void upload(HeartbeatInputStream heartbeatInputStream, String path, String name) throws IOException {
         requireAuth();
 
         final HttpPost post = new HttpPost(endpoint.toString() + "/post/file");
@@ -301,13 +316,13 @@ public class EndpointHTTP implements EndpointMultipart {
             final MultipartEntity entity = new MultipartEntity();
             entity.addPart("directory", new StringBody(path, Charsets.UTF_8));
             entity.addPart("basename", new StringBody(name, Charsets.UTF_8));
-
-            final InputStreamBody body = new InputStreamBody(new HeartbeatInputStream(file, callback),
-                    file.getName());
+            final DigestInputStream digestStream = new DigestInputStream(heartbeatInputStream, MessageDigest.getInstance("SHA-256"));
+            final CountingInputStream countStream = new CountingInputStream(digestStream);
+            final InputStreamBody body = new InputStreamBody(countStream, name);
             entity.addPart("uploadFile", body);
 
             post.setEntity(entity);
-            this.lastQuery = "upload " + file.getAbsolutePath() + " to " + path + "/" + name;
+            this.lastQuery = "upload to " + path + "/" + name;
 
             final HttpResponse response = client.execute(post);
             this.lastResponse = responseToString(response);
@@ -315,17 +330,19 @@ public class EndpointHTTP implements EndpointMultipart {
             final int status = response.getStatusLine().getStatusCode();
 
             if (status == HttpStatus.SC_OK) {
-                final String sha256 = DigestUtils.sha256Hex(new HeartbeatInputStream(file, callback));
+                final String sha256 = Hex.encodeHexString(digestStream.getMessageDigest().digest());
                 final Map<String, String> headerChecks = ImmutableMap.of(
                         "X-Agile-Status", "0",
-                        "X-Agile-Size", Long.toString(file.length()),
+                        "X-Agile-Size", Long.toString(countStream.getCount()),
                         "X-Agile-Checksum", sha256);
                 checkHeaders(response, headerChecks);
             } else {
                 throw throwAndLog("Got status: " + response.getStatusLine().getStatusCode() + " from upload");
             }
         } catch (IOException e) {
-            throw unwindInterruptException(e);
+            throw EndpointUtil.unwindInterruptException(e);
+        } catch (NoSuchAlgorithmException e) {
+            Throwables.propagate(e);
         } finally {
             post.releaseConnection();
         }
@@ -476,7 +493,7 @@ public class EndpointHTTP implements EndpointMultipart {
             log.error("Bad JSON {}", response, e);
             throw e;
         } catch (IOException e) {
-            throw unwindInterruptException(e);
+            throw EndpointUtil.unwindInterruptException(e);
         } finally {
             post.releaseConnection();
         }
@@ -525,26 +542,6 @@ public class EndpointHTTP implements EndpointMultipart {
             post.releaseConnection();
         }
     }
-
-
-    private IOException unwindInterruptException(IOException e) throws IOException {
-        // This is dumb. Sometimes httpcomponents will throw a ClientProtocolException which wraps the real
-        // exception we want to throw when interrupted, ClosedByInterruptException. So, try to find that
-        // exception in the stack, and then throw that one instead
-        Throwable t = e.getCause();
-
-        int i = 10; // cause depth limit
-        while (i-- > 0 && t != null && !(t instanceof ClosedByInterruptException)) {
-            t = t.getCause();
-        }
-
-        if (t instanceof ClosedByInterruptException) {
-            throw (IOException)t;
-        } else {
-            throw e;
-        }
-    }
-
 
     private EndpointException throwAndLog(String message) throws EndpointException {
         log.error(message + "\n  Query(" + this.lastQuery + ")\n  Response(" + this.lastResponse + ")");
